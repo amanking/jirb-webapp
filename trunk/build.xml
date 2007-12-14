@@ -1,0 +1,108 @@
+<project>
+
+    <property name="module.name" value="JirbDemo"/>
+    <property name="src.dir" value="src/java"/>
+    <property name="test.dir" value="test/java"/>
+    <property name="webresources.dir" value="src/webapp"/>
+    <property name="lib.dir" value="lib"/>
+    <property name="webapp.dir" value="jirbdemo"/>
+    <property name="classes.dir" value="${webapp.dir}/WEB-INF/classes"/>
+    <property name="testclasses.dir" value="testclasses"/>
+    <property name="testresult.dir" value="testresults"/>
+
+    <path id="project.test.classpath">        
+        <pathelement location="${classes.dir}"/>
+        <pathelement location="${testclasses.dir}"/>
+        <fileset dir="${lib.dir}">
+            <include name="**/*.jar"/>
+        </fileset>
+    </path>
+
+    <target name="build-setup">
+        <delete dir="${webapp.dir}"/>
+        <mkdir dir="${webapp.dir}"/>
+    </target>
+
+    <target name="build" depends="build-setup, junit.test">
+        <copy todir="${webapp.dir}">
+            <fileset dir="${webresources.dir}"/>
+        </copy>
+
+        <copy todir="${webapp.dir}/WEB-INF/lib">
+            <fileset dir="${lib.dir}"/>
+        </copy>
+    </target>
+
+    <target name="compile.src.setup">
+        <delete dir="${classes.dir}"/>
+        <mkdir dir="${classes.dir}"/>
+    </target>
+
+    <target name="copy-resources">
+         <copy todir="${classes.dir}">
+             <fileset dir="${src.dir}">
+                 <exclude name="**/*.java"/>
+             </fileset>
+         </copy>
+     </target>
+
+    <target name="compile.src" depends="compile.src.setup, copy-resources">
+        <echo>
+            Compiling source for ${module.name}
+        </echo>
+        <javac
+                srcdir="${src.dir}"
+                destdir="${classes.dir}"
+                failonerror="true"
+                fork="no"
+                classpathref="project.test.classpath"
+                verbose="true"
+                >
+            <include name="**/*.xml"/>
+            <include name="**/*.java"/>
+            </javac>
+
+    </target>
+
+    <target name="compile.test.setup">
+        <delete dir="${testclasses.dir}"/>
+        <delete dir="${testresult.dir}"/>
+        <mkdir dir="${testclasses.dir}"/>
+        <mkdir dir="${testresult.dir}"/>
+    </target>
+
+    <target name="compile.test" depends="compile.test.setup, compile.src">
+        <echo>
+            Compiling tests for ${module.name}...
+        </echo>
+        <javac
+                srcdir="${test.dir}"
+                destdir="${testclasses.dir}"
+                failonerror="true"
+                fork="no"
+                verbose="true"
+                classpathref="project.test.classpath"
+                />
+    </target>
+
+    <target name="junit.test" depends="compile.test">
+        <junit printsummary="true" haltonerror="true" haltonfailure="true">
+            <formatter type="xml"/>
+            <formatter type="plain" usefile="false"/>
+            <batchtest todir="${testresult.dir}">
+                <fileset dir="${testclasses.dir}">
+                    <include name="**/*Test.class"/>
+                </fileset>
+
+            </batchtest>
+
+            <classpath>
+                <path refid="project.test.classpath"/>
+                <fileset dir="${classes.dir}">
+                    <include name="**/*.jar"/>
+                </fileset>
+            </classpath>
+
+        </junit>
+    </target>
+</project>
