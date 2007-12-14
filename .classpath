@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src/java"/>
+	<classpathentry kind="src" path="test/java"/>
+	<classpathentry kind="lib" path="E:/Aman/jruby/jirbdemo/lib/asm-2.2.3.jar"/>
+	<classpathentry kind="lib" path="E:/Aman/jruby/jirbdemo/lib/asm-commons-2.2.3.jar"/>
+	<classpathentry kind="lib" path="E:/Aman/jruby/jirbdemo/lib/backport-util-concurrent.jar"/>
+	<classpathentry kind="lib" path="E:/Aman/jruby/jirbdemo/lib/bsf.jar"/>
+	<classpathentry kind="lib" path="E:/Aman/jruby/jirbdemo/lib/commons-logging-1.0.4.jar"/>
+	<classpathentry kind="lib" path="E:/Aman/jruby/jirbdemo/lib/emma.jar"/>
+	<classpathentry kind="lib" path="E:/Aman/jruby/jirbdemo/lib/emma_ant.jar"/>
+	<classpathentry kind="lib" path="E:/Aman/jruby/jirbdemo/lib/freemarker-2.3.8.jar"/>
+	<classpathentry kind="lib" path="E:/Aman/jruby/jirbdemo/lib/jarjar-0.7.jar"/>
+	<classpathentry kind="lib" path="E:/Aman/jruby/jirbdemo/lib/jline-0.9.91.jar"/>
+	<classpathentry kind="lib" path="E:/Aman/jruby/jirbdemo/lib/jruby.jar"/>
+	<classpathentry kind="lib" path="E:/Aman/jruby/jirbdemo/lib/junit.jar"/>
+	<classpathentry kind="lib" path="E:/Aman/jruby/jirbdemo/lib/ognl-2.6.11.jar"/>
+	<classpathentry kind="lib" path="E:/Aman/jruby/jirbdemo/lib/spring.jar"/>
+	<classpathentry kind="lib" path="E:/Aman/jruby/jirbdemo/lib/struts2-core-2.0.11.jar"/>
+	<classpathentry kind="lib" path="E:/Aman/jruby/jirbdemo/lib/struts2-spring-plugin-2.0.11.jar"/>
+	<classpathentry kind="lib" path="E:/Aman/jruby/jirbdemo/lib/velocity-1.5.jar"/>
+	<classpathentry kind="lib" path="E:/Aman/jruby/jirbdemo/lib/xwork-2.0.4.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="out"/>
+</classpath>
