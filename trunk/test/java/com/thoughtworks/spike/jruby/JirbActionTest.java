@@ -26,10 +26,6 @@ public class JirbActionTest extends TestCase {
 		return jirbAction;
 	}
 	
-	public void testShouldReturnInputOnNullScript() {
-		assertEquals(Action.INPUT, action.execute());
-	}
-	
 	public void testShouldReturnSuccessWithOutputOnNonPuts() {
 		action.setLine("java.lang.StringBuffer.new 'Aman'");
 		assertEquals(Action.SUCCESS, action.execute());
@@ -52,7 +48,7 @@ public class JirbActionTest extends TestCase {
 		
 		actionOnNextInvocation.execute();
 
-		assertTrue("Should contain string value", actionOnNextInvocation.getHistory().get(3).contains("Aman"));
+		assertTrue("Should contain string value", actionOnNextInvocation.getHistory().get(1+3).contains("Aman"));
 		
 	}
 
@@ -64,7 +60,7 @@ public class JirbActionTest extends TestCase {
 		actionOnNextInvocation.setLine("puts str");
 		
 		actionOnNextInvocation.execute();
-		assertTrue("Should contain string value", actionOnNextInvocation.getHistory().get(3).contains("Aman"));		
+		assertTrue("Should contain string value", actionOnNextInvocation.getHistory().get(1+3).contains("Aman"));		
 	}
 
 	public void testShouldNotThrowExceptionOnEvaluationError() {
@@ -80,7 +76,10 @@ public class JirbActionTest extends TestCase {
 		nextAction.setLine("puts str");
 		nextAction.execute();
 		
-		assertEquals(5, nextAction.getHistory().size());
+		assertEquals(1+5, nextAction.getHistory().size());
 	}
-		
+	
+	public void testShouldNotReturnNullHistory() {
+		assertNotNull(action.getHistory());
+	}
 }

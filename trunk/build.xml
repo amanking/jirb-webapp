@@ -5,7 +5,7 @@
     <property name="test.dir" value="test/java"/>
     <property name="webresources.dir" value="src/webapp"/>
     <property name="lib.dir" value="lib"/>
-    <property name="webapp.dir" value="jirbdemo"/>
+    <property name="webapp.dir" value="jirbwebapp"/>
     <property name="classes.dir" value="${webapp.dir}/WEB-INF/classes"/>
     <property name="testclasses.dir" value="testclasses"/>
     <property name="testresult.dir" value="testresults"/>

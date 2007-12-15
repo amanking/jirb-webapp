@@ -1,6 +1,7 @@
 package com.thoughtworks.spike.jruby;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -35,24 +36,12 @@ public class JirbAction implements SessionAware, Preparable {
 			runtime=prepareRuntime(outputBuffer);
 	        
 			List<String> history = new ArrayList<String>();
-	        populateSessionMap(outputBuffer, runtime, history);
+			history.add("WELCOME TO jirb BY www.thoughtworks.com\n");
+	        
+			populateSessionMap(outputBuffer, runtime, history);
 		}
 		
         clearRubyOutputBuffer();
-	}
-
-	private Ruby getRuntime() {
-		return (Ruby) sessionMap.get(RUNTIME_SESSION_NAME);
-	}
-
-	public List<String> getHistory() {
-		return (List<String>) sessionMap.get(HISTORY_SESSION_NAME);
-	}
-
-	private void populateSessionMap(final StringBuffer outputBuffer, Ruby runtime, List<String> history) {
-		sessionMap.put(OUTPUT_SESSION_NAME, outputBuffer);
-		sessionMap.put(RUNTIME_SESSION_NAME, runtime);
-		sessionMap.put(HISTORY_SESSION_NAME, history);
 	}
 
 	private Ruby prepareRuntime(final StringBuffer output) {
@@ -62,17 +51,15 @@ public class JirbAction implements SessionAware, Preparable {
 			}			
 		});
 		
-		Ruby runtime = Ruby.newInstance(Ruby.getDefaultInstance().getIn(), out, out);
+		Ruby runtime = Ruby.newInstance(System.in, out, out);
 		runtime.evalScript("require 'java'\n include Java");
 		return runtime;
 	}
 	
-	private String getRubyOutput(){
-		return getRubyOutputBuffer().toString();
-	}
-
-	private StringBuffer getRubyOutputBuffer() {
-		return (StringBuffer) sessionMap.get(OUTPUT_SESSION_NAME);
+	private void populateSessionMap(final StringBuffer outputBuffer, Ruby runtime, List<String> history) {
+		sessionMap.put(OUTPUT_SESSION_NAME, outputBuffer);
+		sessionMap.put(RUNTIME_SESSION_NAME, runtime);
+		sessionMap.put(HISTORY_SESSION_NAME, history);
 	}
 
 	private void clearRubyOutputBuffer() {
@@ -82,7 +69,7 @@ public class JirbAction implements SessionAware, Preparable {
 
 	public String execute() {
 		if(line==null)
-			return Action.INPUT;
+			return Action.SUCCESS;
 		
 		addLineToHistory(">> " + line);
 		
@@ -101,10 +88,6 @@ public class JirbAction implements SessionAware, Preparable {
         return Action.SUCCESS; 
     }
 
-	private String inspectRubyReturnValue(IRubyObject rawRuby) {
-		return "=> "+rawRuby.callMethod(getRuntime().getThreadService().getCurrentContext(), "inspect").toString();
-	}
-
 	private String stripLastNewLineChar(String string) {
 		String outputString=string;
 		if(outputString.length()>0 && outputString.lastIndexOf('\n')==outputString.length()-1)
@@ -112,21 +95,16 @@ public class JirbAction implements SessionAware, Preparable {
 		return outputString;
 	}
 	
-	public String clearHistory() {
-		getHistory().clear();
-		return Action.SUCCESS;
+	private String inspectRubyReturnValue(IRubyObject rawRuby) {
+		return "=> "+rawRuby.callMethod(getRuntime().getThreadService().getCurrentContext(), "inspect").toString();
 	}
 
-	public void setSession(Map sessionMap) {
-		this.sessionMap=sessionMap;
-	}
-	
-	public void setLine(String line) {
-		this.line = line;
+	private void addLineToHistory(String string) {
+		addToHistory(string, true);
 	}
 
-	public String escapeString(String string, boolean addNoBreakSpaces) {
-		return string.replaceAll("&", "&amp;").replaceAll(">", "&gt;").replaceAll("<", "&lt;").replaceAll("\n", "<br>"+(addNoBreakSpaces?"&nbsp;&nbsp;&nbsp;&nbsp;":""));
+	private void addOutputToHistory(String string) {
+		addToHistory(string, false);
 	}
 	
 	private void addToHistory(String string, boolean addNoBreakSpaces) {
@@ -135,11 +113,38 @@ public class JirbAction implements SessionAware, Preparable {
 			getHistory().add(escapedString);
 		}
 	}
-	private void addOutputToHistory(String string) {
-		addToHistory(string, false);
+	
+	public String escapeString(String string, boolean addNoBreakSpaces) {
+		return string.replaceAll("&", "&amp;").replaceAll(">", "&gt;").replaceAll("<", "&lt;").replaceAll("\n", "<br>"+(addNoBreakSpaces?"&nbsp;&nbsp;&nbsp;":""));
 	}
-	private void addLineToHistory(String string) {
-		addToHistory(string, true);
+	
+	public String clearHistory() {
+		getHistory().clear();
+		return Action.SUCCESS;
 	}
 
+	private Ruby getRuntime() {
+		return (Ruby) sessionMap.get(RUNTIME_SESSION_NAME);
+	}
+
+	public List<String> getHistory() {
+		return (List<String>) sessionMap.get(HISTORY_SESSION_NAME);
+	}
+
+	private String getRubyOutput(){
+		return getRubyOutputBuffer().toString();
+	}
+
+	private StringBuffer getRubyOutputBuffer() {
+		return (StringBuffer) sessionMap.get(OUTPUT_SESSION_NAME);
+	}
+
+	public void setLine(String line) {
+		this.line = line;
+	}
+
+	public void setSession(Map sessionMap) {
+		this.sessionMap=sessionMap;
+	}
+	
 }
