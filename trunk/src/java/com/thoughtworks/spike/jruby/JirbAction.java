@@ -3,93 +3,107 @@ package com.thoughtworks.spike.jruby;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.struts2.interceptor.SessionAware;
+
 import org.jruby.Ruby;
-import org.jruby.runtime.ThreadContext;
+import org.jruby.exceptions.RaiseException;
 import org.jruby.runtime.builtin.IRubyObject;
 
 import com.opensymphony.xwork2.Action;
-import com.opensymphony.xwork2.ActionSupport;
 import com.opensymphony.xwork2.Preparable;
 
 // Understands how to implement jirb via web
 
-public class JirbAction extends ActionSupport implements SessionAware, Preparable {
+public class JirbAction implements SessionAware, Preparable {
 	private static final String OUTPUT_SESSION_NAME = "output";
-
 	private static final String HISTORY_SESSION_NAME = "HISTORY";
-
 	private static final String RUNTIME_SESSION_NAME = "runtime";
 	
 	private String line;
-	private Ruby runtime;
-	private StringBuffer output;
-	private ThreadContext threadContext;
 	private Map sessionMap;
-
-	private List<String> history;
-	private PrintStream out;
 
 	public void prepare() {
 		
-		runtime=(Ruby) sessionMap.get(RUNTIME_SESSION_NAME);
+		Ruby runtime=getRuntime();
 		if(runtime==null) {
-			output = new StringBuffer();
-			sessionMap.put(OUTPUT_SESSION_NAME, output);
+			final StringBuffer outputBuffer = new StringBuffer();
 			
-			StringWriter stringWriter = new StringWriter();
-			out=new PrintStream(new OutputStream() {
-				public void write(int b) throws IOException {
-					output.append((char)b);
-				}			
-			});
-			
-			runtime = Ruby.newInstance(Ruby.getDefaultInstance().getIn(), out, out);
-			
-	        runtime.evalScript("require 'java'\n include Java");
+			runtime=prepareRuntime(outputBuffer);
 	        
-			sessionMap.put(RUNTIME_SESSION_NAME, runtime);
-			
-			history = new ArrayList<String>();
-			sessionMap.put(HISTORY_SESSION_NAME, history);
-			
+			List<String> history = new ArrayList<String>();
+	        populateSessionMap(outputBuffer, runtime, history);
 		}
 		
-		history = (List<String>) sessionMap.get(HISTORY_SESSION_NAME);
-        threadContext = runtime.getThreadService().getCurrentContext();
-        output=(StringBuffer) sessionMap.get(OUTPUT_SESSION_NAME);
-        output.replace(0, output.length(), "");
+        clearRubyOutputBuffer();
 	}
 
+	private Ruby getRuntime() {
+		return (Ruby) sessionMap.get(RUNTIME_SESSION_NAME);
+	}
+
+	public List<String> getHistory() {
+		return (List<String>) sessionMap.get(HISTORY_SESSION_NAME);
+	}
+
+	private void populateSessionMap(final StringBuffer outputBuffer, Ruby runtime, List<String> history) {
+		sessionMap.put(OUTPUT_SESSION_NAME, outputBuffer);
+		sessionMap.put(RUNTIME_SESSION_NAME, runtime);
+		sessionMap.put(HISTORY_SESSION_NAME, history);
+	}
+
+	private Ruby prepareRuntime(final StringBuffer output) {
+		PrintStream out=new PrintStream(new OutputStream() {
+			public void write(int b) throws IOException {
+				output.append((char)b);
+			}			
+		});
+		
+		Ruby runtime = Ruby.newInstance(Ruby.getDefaultInstance().getIn(), out, out);
+		runtime.evalScript("require 'java'\n include Java");
+		return runtime;
+	}
+	
+	private String getRubyOutput(){
+		return getRubyOutputBuffer().toString();
+	}
+
+	private StringBuffer getRubyOutputBuffer() {
+		return (StringBuffer) sessionMap.get(OUTPUT_SESSION_NAME);
+	}
+
+	private void clearRubyOutputBuffer() {
+		StringBuffer outputBuffer=getRubyOutputBuffer();
+		outputBuffer.replace(0, outputBuffer.length(), "");
+	}
 
 	public String execute() {
 		if(line==null)
 			return Action.INPUT;
 		
-		System.out.println("line = "+line);
-		addToHistory(">> " + line, true);
+		addLineToHistory(">> " + line);
 		
-		try {
-			IRubyObject rawRuby = runtime.evalScript(line);
-			addToHistory(stripLastNewLineChar(output.toString()));
+		try {			
+			IRubyObject rubyReturnValue = getRuntime().evalScript(line);
+			addOutputToHistory(stripLastNewLineChar(getRubyOutput()));
 
-			String inspectOutput="=> "+rawRuby.callMethod(threadContext, "inspect").toString();
-			addToHistory(inspectOutput);
+			String inspectOutput=inspectRubyReturnValue(rubyReturnValue);
+			addOutputToHistory(inspectOutput);
 		}
 		catch(Exception e) {
-			e.printStackTrace();
-			addActionError("Your code has error(s)!");
-			addToHistory("---- compilation error");
+			RaiseException raiseException=(RaiseException) e;
+			addOutputToHistory("Error: "+raiseException.getException());
 		}
 		
         return Action.SUCCESS; 
     }
 
+	private String inspectRubyReturnValue(IRubyObject rawRuby) {
+		return "=> "+rawRuby.callMethod(getRuntime().getThreadService().getCurrentContext(), "inspect").toString();
+	}
 
 	private String stripLastNewLineChar(String string) {
 		String outputString=string;
@@ -99,8 +113,7 @@ public class JirbAction extends ActionSupport implements SessionAware, Preparabl
 	}
 	
 	public String clearHistory() {
-		System.out.println("clearing history...");
-		history.clear();
+		getHistory().clear();
 		return Action.SUCCESS;
 	}
 
@@ -116,17 +129,17 @@ public class JirbAction extends ActionSupport implements SessionAware, Preparabl
 		return string.replaceAll("&", "&amp;").replaceAll(">", "&gt;").replaceAll("<", "&lt;").replaceAll("\n", "<br>"+(addNoBreakSpaces?"&nbsp;&nbsp;&nbsp;&nbsp;":""));
 	}
 	
-	public List<String> getHistory() {
-		return history;
-	}
-	
 	private void addToHistory(String string, boolean addNoBreakSpaces) {
-		String lastOutput=escapeString(string, addNoBreakSpaces);
-		if(lastOutput.length()!=0) {
-			history.add(lastOutput);
+		String escapedString=escapeString(string, addNoBreakSpaces);
+		if(escapedString.length()!=0) {
+			getHistory().add(escapedString);
 		}
 	}
-	private void addToHistory(String string) {
+	private void addOutputToHistory(String string) {
 		addToHistory(string, false);
 	}
+	private void addLineToHistory(String string) {
+		addToHistory(string, true);
+	}
+
 }

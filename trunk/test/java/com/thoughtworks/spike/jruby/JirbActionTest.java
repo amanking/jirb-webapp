@@ -39,7 +39,6 @@ public class JirbActionTest extends TestCase {
 	public void testShouldReturnSuccessWithOutputOnPuts() {
 		action.setLine("puts java.lang.StringBuffer.new 'Aman'");
 
-		System.out.println("in withoutputonputs, history="+action.getHistory());
 		assertEquals(Action.SUCCESS, action.execute());
 		assertTrue("Should contain string value", action.getHistory().get(1).contains("Aman"));
 	}
@@ -65,7 +64,6 @@ public class JirbActionTest extends TestCase {
 		actionOnNextInvocation.setLine("puts str");
 		
 		actionOnNextInvocation.execute();
-		System.out.println("history: "+action.getHistory());
 		assertTrue("Should contain string value", actionOnNextInvocation.getHistory().get(3).contains("Aman"));		
 	}
 
