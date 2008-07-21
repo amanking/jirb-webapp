@@ -51,7 +51,7 @@ public class JirbAction implements SessionAware, Preparable {
         });
 
         Ruby runtime = Ruby.newInstance(System.in, out, out);
-        runtime.evalScript("require 'java'\n include Java");
+        runtime.evalScriptlet("require 'java'\n include Java");
         return runtime;
     }
 
@@ -73,7 +73,7 @@ public class JirbAction implements SessionAware, Preparable {
         addCodeLineToHistory(line);
 
         try {
-            IRubyObject rubyReturnValue = getRuntime().evalScript(line);
+            IRubyObject rubyReturnValue = getRuntime().evalScriptlet(line);
             addConsoleOutputToHistory(stripLastNewLineChar(getRubyConsoleOutput()));
 
             String inspectOutput = inspectRubyReturnValue(rubyReturnValue);
