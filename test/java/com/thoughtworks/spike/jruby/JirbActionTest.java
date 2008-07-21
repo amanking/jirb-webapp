@@ -28,16 +28,31 @@ public class JirbActionTest extends TestCase {
 	
 	public void testShouldReturnSuccessWithOutputOnNonPuts() {
 		action.setLine("java.lang.StringBuffer.new 'Aman'");
-		assertEquals(Action.SUCCESS, action.execute());
-		assertTrue("Should contain string value", action.getHistory().get(1).contains("Aman"));
-	}
+
+        assertEquals(Action.SUCCESS, action.execute());
+
+        assertEquals("<span class='code_line'>&gt;&gt; java.lang.StringBuffer.new 'Aman'</span>", action.getHistory().get(1).toString());
+        assertTrue("Should show object description in a span but got '"+action.getHistory().get(2).toString()+"'", action.getHistory().get(2).toString().matches("<span class='returned_value'>=&gt; #&lt;Java::JavaLang::StringBuffer:(.*?) @java_object=Aman&gt;</span>"));
+    }
+
+	public void testShouldReturnSuccessWithOutputOnMultilineNonPuts() {
+		action.setLine("java.lang.StringBuffer.new 'Aman'\nstr='aman'");
+
+        assertEquals(Action.SUCCESS, action.execute());
+
+        assertEquals("<span class='code_line'>&gt;&gt; java.lang.StringBuffer.new 'Aman'<br>&nbsp;&nbsp;&nbsp;str='aman'</span>", action.getHistory().get(1).toString());
+        assertEquals("<span class='returned_value'>=&gt; \"aman\"</span>", action.getHistory().get(2).toString());
+    }
 
 	public void testShouldReturnSuccessWithOutputOnPuts() {
-		action.setLine("puts java.lang.StringBuffer.new 'Aman'");
+		action.setLine("puts java.lang.StringBuffer.new('Aman')");
 
 		assertEquals(Action.SUCCESS, action.execute());
-		assertTrue("Should contain string value", action.getHistory().get(1).contains("Aman"));
-	}
+
+        assertEquals("<span class='code_line'>&gt;&gt; puts java.lang.StringBuffer.new('Aman')</span>", action.getHistory().get(1).toString());
+		assertEquals("<span class='console_output'>Aman</span>", action.getHistory().get(2).toString());
+        assertEquals("<span class='returned_value'>=&gt; nil</span>", action.getHistory().get(3).toString());
+    }
 
 	public void testShouldRetainContextOverSeparateInvocationsInASession() {
 		action.setLine("str='Aman'");
@@ -48,8 +63,10 @@ public class JirbActionTest extends TestCase {
 		
 		actionOnNextInvocation.execute();
 
-		assertTrue("Should contain string value", actionOnNextInvocation.getHistory().get(1+3).contains("Aman"));
-		
+        assertEquals("<span class='code_line'>&gt;&gt; str='Aman'</span>", action.getHistory().get(1).toString());
+        assertEquals("<span class='returned_value'>=&gt; \"Aman\"</span>", action.getHistory().get(2).toString());
+        assertEquals("<span class='code_line'>&gt;&gt; str</span>", action.getHistory().get(3).toString());
+        assertEquals("<span class='returned_value'>=&gt; \"Aman\"</span>", action.getHistory().get(4).toString());
 	}
 
 	public void testShouldRetainContextOverPutsInSeparateInvocationsInASession() {
@@ -60,13 +77,21 @@ public class JirbActionTest extends TestCase {
 		actionOnNextInvocation.setLine("puts str");
 		
 		actionOnNextInvocation.execute();
-		assertTrue("Should contain string value", actionOnNextInvocation.getHistory().get(1+3).contains("Aman"));		
+
+        assertEquals("<span class='code_line'>&gt;&gt; str='Aman'</span>", action.getHistory().get(1).toString());
+        assertEquals("<span class='returned_value'>=&gt; \"Aman\"</span>", action.getHistory().get(2).toString());
+        assertEquals("<span class='code_line'>&gt;&gt; puts str</span>", action.getHistory().get(3).toString());
+        assertEquals("<span class='console_output'>Aman</span>", action.getHistory().get(4).toString());
+        assertEquals("<span class='returned_value'>=&gt; nil</span>", action.getHistory().get(5).toString());
 	}
 
-	public void testShouldNotThrowExceptionOnEvaluationError() {
+	public void testShouldNotThrowExceptionOnEvaluationErrorButDisplayError() {
 		action.setLine("requireX 'java'");
 		action.execute();
-	}
+
+        assertEquals("<span class='code_line'>&gt;&gt; requireX 'java'</span>", action.getHistory().get(1).toString());
+        assertEquals("<span class='error'>NoMethodError: undefined method `requireX' for main:Object</span>", action.getHistory().get(2).toString());
+    }
 	
 	public void testShouldRetainInputAndOutputAsHistory() {
 		action.setLine("str='Aman'");
